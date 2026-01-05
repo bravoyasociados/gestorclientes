@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sistema de Facturación</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+ --azul:#0d47a1;
+ --azulClaro:#e3f2fd;
+ --verde:#2e7d32;
+ --gris:#f4f6f8;
+}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Roboto;
+ background:var(--gris);
+}
+header{
+ background:var(--azul);
+ color:white;
+ padding:12px 15px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ position:sticky;
+ top:0;
+ z-index:1000;
+}
+nav a{
+ color:white;
+ margin:0 10px;
+ text-decoration:none;
+ font-weight:500;
+}
+.menu-btn{
+ display:none;
+ font-size:24px;
+ cursor:pointer;
+}
+nav.mobile{
+ display:none;
+ background:#08306b;
+ flex-direction:column;
+}
+nav.mobile a{
+ padding:12px;
+ border-top:1px solid rgba(255,255,255,.2);
+}
+
+.container{padding:15px}
+.card{
+ background:white;
+ padding:15px;
+ border-radius:10px;
+ margin-bottom:15px;
+ box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+h3{margin-top:0;color:var(--azul)}
+input,select,button{
+ width:100%;
+ padding:10px;
+ margin:5px 0;
+ border-radius:6px;
+ border:1px solid #ccc;
+}
+button{
+ background:var(--azul);
+ color:white;
+ border:none;
+ cursor:pointer;
+ font-weight:500;
+}
+button.success{background:var(--verde)}
+button.danger{background:#c62828}
+table{
+ width:100%;
+ border-collapse:collapse;
+ margin-top:10px;
+}
+th,td{
+ padding:8px;
+ border-bottom:1px solid #ddd;
+ text-align:left;
+}
+th{background:var(--azulClaro)}
+.hidden{display:none}
+
+@media(max-width:768px){
+ nav.desktop{display:none}
+ .menu-btn{display:block}
+ nav.mobile.show{display:flex}
+}
+</style>
+</head>
+
+<body>
+
+<header id="topBar" class="hidden">
+  <div>📄 Sistema de Facturación</div>
+  <div class="menu-btn" onclick="toggleMenu()">☰</div>
+  <nav class="desktop" id="menuDesktop"></nav>
+</header>
+<nav class="mobile" id="menuMobile"></nav>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginCard">
+ <h3>Iniciar sesión</h3>
+ <input id="loginUser" placeholder="Usuario">
+ <input id="loginPass" type="password" placeholder="Contraseña">
+ <button onclick="login()">Entrar</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<!-- CLIENTES -->
+<div class="card hidden" id="clientes">
+ <h3>Clientes</h3>
+ <input id="clienteId" placeholder="Número de cliente">
+ <input id="clienteNombre" placeholder="Nombre del cliente">
+ <button onclick="guardarCliente()">Guardar / Actualizar</button>
+ <table id="tablaClientes"></table>
+</div>
+
+<!-- FACTURAS -->
+<div class="card hidden" id="facturas">
+ <h3>Facturas</h3>
+ <input id="facturaNum" placeholder="Número de factura (único)">
+ <select id="clienteFactura"></select>
+ <input id="monto" type="number" placeholder="Monto MXN">
+ <input id="fecha" type="date">
+ <button onclick="guardarFactura()">Guardar / Actualizar</button>
+ <table id="tablaFacturas"></table>
+</div>
+
+<!-- REPORTES -->
+<div class="card hidden" id="reportes">
+ <h3>Reportes</h3>
+
+ <select id="tipoReporte" onchange="cambiarTipoReporte()">
+  <option value="">Selecciona tipo</option>
+  <option value="cliente">Por cliente</option>
+  <option value="global">Global</option>
+ </select>
+
+ <div id="bloqueCliente" class="hidden">
+  <select id="clienteReporte"></select>
+ </div>
+
+ <select id="tipoTiempo" onchange="cambiarTiempo()">
+  <option value="">Periodo</option>
+  <option value="dia">Por día</option>
+  <option value="mes">Por mes</option>
+ </select>
+
+ <div id="bloqueDia" class="hidden">
+  <input type="date" id="fechaDia">
+ </div>
+
+ <div id="bloqueMes" class="hidden">
+  <input type="month" id="mesReporte">
+ </div>
+
+ <button onclick="generarReporte()">Generar PDF</button>
+ <button id="btnCompartir" class="success hidden" onclick="compartirPDF()">Compartir PDF</button>
+</div>
+
+<!-- USUARIOS -->
+<div class="card hidden" id="usuarios">
+ <h3>Usuarios</h3>
+ <input id="userEdit" placeholder="Usuario">
+ <input id="passEdit" placeholder="Contraseña">
+ <select id="rolEdit">
+  <option value="user">Usuario</option>
+  <option value="admin">Administrador</option>
+ </select>
+ <button onclick="guardarUsuario()">Guardar / Actualizar</button>
+ <table id="tablaUsuarios"></table>
+</div>
+
+</div>
+</div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+/* ===== DATOS ===== */
+let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [
+ {u:"Fabian",p:"adminFabian",r:"admin"},
+ {u:"Gerardo",p:"Mati2026",r:"user"},
+ {u:"Angelica",p:"Mati2026",r:"user"}
+];
+let clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+let facturas = JSON.parse(localStorage.getItem("facturas")) || [];
+let sesion=null;
+let pdfBlob=null;
+
+/* ===== MENÚ ===== */
+function toggleMenu(){
+ document.getElementById("menuMobile").classList.toggle("show");
+}
+function construirMenu(){
+ let html = `
+ <a onclick="mostrar('clientes')">Clientes</a>
+ <a onclick="mostrar('facturas')">Facturas</a>
+ <a onclick="mostrar('reportes')">Reportes</a>
+ <a onclick="logout()">Salir</a>`;
+ if(sesion.r==="admin"){
+  html = `
+  <a onclick="mostrar('clientes')">Clientes</a>
+  <a onclick="mostrar('facturas')">Facturas</a>
+  <a onclick="mostrar('reportes')">Reportes</a>
+  <a onclick="mostrar('usuarios')">Usuarios</a>
+  <a onclick="logout()">Salir</a>`;
+ }
+ menuDesktop.innerHTML=html;
+ menuMobile.innerHTML=html;
+}
+
+/* ===== LOGIN ===== */
+function login(){
+ const u=loginUser.value,p=loginPass.value;
+ const user=usuarios.find(x=>x.u===u && x.p===p);
+ if(!user) return alert("Credenciales incorrectas");
+ sesion=user;
+ loginCard.classList.add("hidden");
+ app.classList.remove("hidden");
+ topBar.classList.remove("hidden");
+ construirMenu();
+ renderClientes(); renderFacturas(); renderUsuarios();
+}
+
+/* ===== LOGOUT ===== */
+function logout(){location.reload();}
+
+/* ===== MOSTRAR ===== */
+function mostrar(id){
+ document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+}
+
+/* ===== CLIENTES ===== */
+function guardarCliente(){
+ const id=clienteId.value,n=clienteNombre.value;
+ const i=clientes.findIndex(c=>c.id===id);
+ if(i>=0) clientes[i]={id,nombre:n};
+ else clientes.push({id,nombre:n});
+ localStorage.setItem("clientes",JSON.stringify(clientes));
+ renderClientes();
+}
+function renderClientes(){
+ tablaClientes.innerHTML="<tr><th>ID</th><th>Nombre</th><th></th></tr>";
+ clientes.forEach((c,i)=>{
+  tablaClientes.innerHTML+=`
+  <tr>
+   <td>${c.id}</td><td>${c.nombre}</td>
+   <td>
+    <button onclick="editarCliente(${i})">✏️</button>
+    <button class="danger" onclick="eliminarCliente(${i})">🗑️</button>
+   </td>
+  </tr>`;
+ });
+ clienteFactura.innerHTML = clienteReporte.innerHTML =
+ clientes.map(c=>`<option value="${c.id}">${c.id} - ${c.nombre}</option>`).join("");
+}
+function editarCliente(i){
+ clienteId.value=clientes[i].id;
+ clienteNombre.value=clientes[i].nombre;
+}
+function eliminarCliente(i){
+ clientes.splice(i,1);
+ localStorage.setItem("clientes",JSON.stringify(clientes));
+ renderClientes();
+}
+
+/* ===== FACTURAS ===== */
+function guardarFactura(){
+ const f={
+  factura:facturaNum.value,
+  clienteId:clienteFactura.value,
+  monto:+monto.value,
+  fecha:fecha.value || new Date().toISOString().slice(0,10),
+  usuario:sesion.u
+ };
+ const i=facturas.findIndex(x=>x.factura===f.factura);
+ if(i>=0) facturas[i]=f;
+ else facturas.push(f);
+ localStorage.setItem("facturas",JSON.stringify(facturas));
+ renderFacturas();
+}
+function renderFacturas(){
+ tablaFacturas.innerHTML="<tr><th>Factura</th><th>Cliente</th><th>Monto</th><th>Fecha</th><th>Usuario</th><th></th></tr>";
+ facturas.forEach((f,i)=>{
+  const c=clientes.find(x=>x.id===f.clienteId);
+  tablaFacturas.innerHTML+=`
+  <tr>
+   <td>${f.factura}</td>
+   <td>${c?c.nombre:""}</td>
+   <td>$${f.monto.toFixed(2)}</td>
+   <td>${f.fecha}</td>
+   <td>${f.usuario}</td>
+   <td>
+    <button onclick="editarFactura(${i})">✏️</button>
+    <button class="danger" onclick="eliminarFactura(${i})">🗑️</button>
+   </td>
+  </tr>`;
+ });
+}
+function editarFactura(i){
+ const f=facturas[i];
+ facturaNum.value=f.factura;
+ clienteFactura.value=f.clienteId;
+ monto.value=f.monto;
+ fecha.value=f.fecha;
+}
+function eliminarFactura(i){
+ facturas.splice(i,1);
+ localStorage.setItem("facturas",JSON.stringify(facturas));
+ renderFacturas();
+}
+
+/* ===== REPORTES ===== */
+function cambiarTipoReporte(){
+ bloqueCliente.classList.toggle("hidden",tipoReporte.value!=="cliente");
+}
+function cambiarTiempo(){
+ bloqueDia.classList.toggle("hidden",tipoTiempo.value!=="dia");
+ bloqueMes.classList.toggle("hidden",tipoTiempo.value!=="mes");
+}
+
+function generarReporte(){
+ const pdf=new jsPDF();
+ let y=30,total=0;
+ pdf.setFillColor(13,71,161);
+ pdf.rect(0,0,210,20,"F");
+ pdf.setTextColor(255);
+ pdf.setFontSize(16);
+ pdf.text("REPORTE",105,13,{align:"center"});
+
+ pdf.setTextColor(0); pdf.setFontSize(11);
+ let datos=[...facturas];
+ let titulo="REPORTE GLOBAL";
+
+ if(tipoReporte.value==="cliente"){
+  datos=datos.filter(f=>f.clienteId===clienteReporte.value);
+  const c=clientes.find(x=>x.id===clienteReporte.value);
+  titulo=`Cliente: ${c.nombre} (${c.id})`;
+ }
+
+ if(tipoTiempo.value==="dia"){
+  datos=datos.filter(f=>f.fecha===fechaDia.value);
+ }
+ if(tipoTiempo.value==="mes"){
+  datos=datos.filter(f=>f.fecha.startsWith(mesReporte.value));
+ }
+
+ pdf.text(titulo,10,y); y+=6;
+ pdf.text(`Generado por: ${sesion.u}`,10,y); y+=6;
+ pdf.text(`Fecha: ${new Date().toLocaleString()}`,10,y); y+=10;
+
+ pdf.setFillColor(227,242,253);
+ pdf.rect(10,y,190,8,"F");
+ pdf.setTextColor(13,71,161);
+ pdf.text("Factura",12,y+6);
+ pdf.text("Fecha",50,y+6);
+ pdf.text("Cliente",90,y+6);
+ pdf.text("Monto",190,y+6,{align:"right"});
+ y+=10;
+
+ pdf.setTextColor(0);
+ datos.forEach(d=>{
+  const c=clientes.find(x=>x.id===d.clienteId);
+  pdf.text(d.factura,12,y);
+  pdf.text(d.fecha,50,y);
+  pdf.text(c?c.nombre:"",90,y);
+  pdf.text(`$${d.monto.toFixed(2)}`,190,y,{align:"right"});
+  total+=d.monto; y+=7;
+ });
+
+ pdf.setFillColor(46,125,50);
+ pdf.rect(110,y+5,90,10,"F");
+ pdf.setTextColor(255);
+ pdf.text(`TOTAL: $${total.toFixed(2)}`,195,y+12,{align:"right"});
+
+ pdfBlob=pdf.output("blob");
+ pdf.save("reporte.pdf");
+
+ if(navigator.share) btnCompartir.classList.remove("hidden");
+}
+
+/* ===== COMPARTIR ===== */
+function compartirPDF(){
+ const file=new File([pdfBlob],"reporte.pdf",{type:"application/pdf"});
+ navigator.share({files:[file],title:"Reporte"});
+}
+
+/* ===== USUARIOS ===== */
+function guardarUsuario(){
+ if(sesion.r!=="admin") return;
+ const u=userEdit.value,p=passEdit.value,r=rolEdit.value;
+ const i=usuarios.findIndex(x=>x.u===u);
+ if(i>=0) usuarios[i]={u,p,r};
+ else usuarios.push({u,p,r});
+ localStorage.setItem("usuarios",JSON.stringify(usuarios));
+ renderUsuarios();
+}
+function renderUsuarios(){
+ if(sesion.r!=="admin") return;
+ tablaUsuarios.innerHTML="<tr><th>Usuario</th><th>Rol</th><th></th></tr>";
+ usuarios.forEach((u,i)=>{
+  tablaUsuarios.innerHTML+=`
+  <tr>
+   <td>${u.u}</td><td>${u.r}</td>
+   <td>
+    <button onclick="editarUsuario(${i})">✏️</button>
+    ${u.u!=="Fabian"?`<button class="danger" onclick="eliminarUsuario(${i})">🗑️</button>`:""}
+   </td>
+  </tr>`;
+ });
+}
+function editarUsuario(i){
+ userEdit.value=usuarios[i].u;
+ passEdit.value=usuarios[i].p;
+ rolEdit.value=usuarios[i].r;
+}
+function eliminarUsuario(i){
+ usuarios.splice(i,1);
+ localStorage.setItem("usuarios",JSON.stringify(usuarios));
+ renderUsuarios();
+}
+</script>
+</body>
+</html>
