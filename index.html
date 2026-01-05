@@ -1,116 +1,938 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gestor de Clientes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Clientes</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
+<!-- MATERIAL DESIGN -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    .login, .panel {
-      max-width: 420px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.1);
-    }
+<style>
+:root{
+  --azul:#0d47a1;
+  --azul-claro:#1976d2;
+  --verde:#2e7d32;
+  --gris:#f4f6f8;
+}
 
-    h2 {
-      text-align: center;
-      color: #1f3a5f;
-    }
+*{box-sizing:border-box;font-family:Roboto}
 
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-    }
+body{
+  margin:0;
+  background:var(--gris);
+}
 
-    button {
-      background: #1f3a5f;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+/* LOGIN */
+#login{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.login-box{
+  background:#fff;
+  padding:30px;
+  width:100%;
+  max-width:380px;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+.login-box h2{
+  text-align:center;
+  color:var(--azul);
+}
+.login-box input, .login-box button{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+}
+.login-box button{
+  background:var(--azul);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
 
-    button:hover {
-      background: #16304d;
-    }
+/* APP */
+#app{
+  display:none;
+}
 
-    .hidden {
-      display: none;
-    }
-  </style>
+/* NAVBAR */
+.navbar{
+  background:var(--azul);
+  color:#fff;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.navbar button{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:220px;
+  background:#fff;
+  position:fixed;
+  top:56px;
+  bottom:0;
+  left:0;
+  padding:15px;
+  box-shadow:2px 0 5px rgba(0,0,0,.1);
+}
+.sidebar button{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border:none;
+  background:var(--azul-claro);
+  color:#fff;
+  cursor:pointer;
+}
+
+/* CONTENT */
+.content{
+  margin-left:240px;
+  padding:20px;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+}
+th{
+  background:var(--azul);
+  color:#fff;
+}
+
+/* FORMS */
+input, select{
+  padding:8px;
+  width:100%;
+  margin-bottom:10px;
+}
+button.action{
+  background:var(--verde);
+  color:#fff;
+  border:none;
+  padding:10px;
+  cursor:pointer;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{
+    position:relative;
+    width:100%;
+    top:0;
+    box-shadow:none;
+  }
+  .content{
+    margin-left:0;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <div class="login" id="login">
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
     <h2>Iniciar sesión</h2>
-    <input type="text" id="usuario" placeholder="Usuario">
-    <input type="password" id="password" placeholder="Contraseña">
+    <input id="loginUser" placeholder="Usuario">
+    <input id="loginPass" type="password" placeholder="Contraseña">
     <button onclick="login()">Entrar</button>
   </div>
+</div>
 
-  <div class="panel hidden" id="panel">
-    <h2>Bienvenido</h2>
-    <p id="bienvenida"></p>
+<!-- APP -->
+<div id="app">
+  <div class="navbar">
+    <span>Gestor de Clientes</span>
+    <button onclick="logout()">Cerrar sesión</button>
   </div>
 
+  <div class="sidebar">
+    <button onclick="show('clientes')">Clientes</button>
+    <button onclick="show('facturas')">Facturas</button>
+    <button onclick="show('reportes')">Reportes</button>
+    <button id="usuariosBtn" onclick="show('usuarios')">Usuarios</button>
+  </div>
+
+  <div class="content">
+
+    <!-- CLIENTES -->
+    <div id="clientes" style="display:none">
+      <h2>Clientes</h2>
+      <input id="clienteNumero" placeholder="Número de cliente">
+      <input id="clienteNombre" placeholder="Nombre del cliente">
+      <button class="action" onclick="guardarCliente()">Guardar cliente</button>
+      <table id="tablaClientes"></table>
+    </div>
+
+    <!-- FACTURAS -->
+    <div id="facturas" style="display:none">
+      <h2>Facturas</h2>
+      <select id="facturaCliente"></select>
+      <input id="facturaNumero" placeholder="Número de factura">
+      <input id="facturaFecha" type="date">
+      <input id="facturaMonto" placeholder="Monto MXN">
+      <button class="action" onclick="guardarFactura()">Guardar factura</button>
+      <table id="tablaFacturas"></table>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="reportes" style="display:none">
+      <h2>Reportes</h2>
+      <select id="tipoReporte">
+        <option value="">Seleccionar</option>
+        <option value="cliente">Por cliente</option>
+        <option value="global">Global</option>
+      </select>
+
+      <div id="reporteCliente" style="display:none">
+        <select id="reporteClienteSelect"></select>
+        <select id="reporteTipo">
+          <option value="">Tipo</option>
+          <option value="dia">Por día</option>
+          <option value="mes">Por mes</option>
+        </select>
+        <input id="reporteFecha" type="date">
+        <input id="reporteMes" type="month">
+      </div>
+
+      <button class="action" onclick="generarReporte()">Generar reporte</button>
+      <div id="resultadoReporte"></div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="usuarios" style="display:none">
+      <h2>Usuarios</h2>
+      <input id="userNombre" placeholder="Usuario">
+      <input id="userPass" placeholder="Contraseña">
+      <select id="userRol">
+        <option value="usuario">Usuario</option>
+        <option value="admin">Administrador</option>
+      </select>
+      <button class="action" onclick="guardarUsuario()">Guardar usuario</button>
+      <table id="tablaUsuarios"></table>
+    </div>
+
+  </div>
+</div>
+<!-- FIREBASE + LOGICA -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    where
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+/* ===============================
+   🔥 FIREBASE CONFIG
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyD7fjnrJoDGf1LemftyATTiHKCHF_nG2vw",
-    authDomain: "gestor-clientes-f96ad.firebaseapp.com",
-    projectId: "gestor-clientes-f96ad",
-    storageBucket: "gestor-clientes-f96ad.firebasestorage.app",
-    messagingSenderId: "311331329644",
-    appId: "1:311331329644:web:3f73825fd6775842ff2a49"
+const firebaseConfig = {
+  apiKey: "AIzaSyD7fjnrJoDGf1LemftyATTiHKCHF_nG2vw",
+  authDomain: "gestor-clientes-f96ad.firebaseapp.com",
+  projectId: "gestor-clientes-f96ad",
+  storageBucket: "gestor-clientes-f96ad.appspot.com",
+  messagingSenderId: "311331329644",
+  appId: "1:311331329644:web:3f73825fd6775842ff2a49"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ===============================
+   🔐 SESION
+================================ */
+let usuarioActual = null;
+
+window.login = async function(){
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+
+  const q = query(collection(db,"usuarios"),
+    where("nombre","==",u),
+    where("password","==",p)
+  );
+  const snap = await getDocs(q);
+
+  if(snap.empty){
+    alert("Usuario o contraseña incorrectos");
+    return;
+  }
+
+  snap.forEach(d=>{
+    usuarioActual = {id:d.id, ...d.data()};
+  });
+
+  sessionStorage.setItem("usuario", JSON.stringify(usuarioActual));
+  iniciarApp();
+};
+
+window.logout = function(){
+  sessionStorage.clear();
+  location.reload();
+};
+
+function iniciarApp(){
+  usuarioActual = JSON.parse(sessionStorage.getItem("usuario"));
+  if(!usuarioActual){
+    document.getElementById("login").style.display="flex";
+    document.getElementById("app").style.display="none";
+    return;
+  }
+
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  if(usuarioActual.rol !== "admin"){
+    document.getElementById("usuariosBtn").style.display="none";
+  }
+
+  cargarClientes();
+  cargarUsuarios();
+}
+
+iniciarApp();
+
+/* ===============================
+   📌 NAVEGACION
+================================ */
+window.show = function(id){
+  document.querySelectorAll(".content > div").forEach(d=>d.style.display="none");
+  document.getElementById(id).style.display="block";
+};
+
+/* ===============================
+   👤 USUARIOS (ADMIN)
+================================ */
+window.guardarUsuario = async function(){
+  if(usuarioActual.rol !== "admin") return;
+
+  await addDoc(collection(db,"usuarios"),{
+    nombre:userNombre.value,
+    password:userPass.value,
+    rol:userRol.value
+  });
+  userNombre.value=userPass.value="";
+  cargarUsuarios();
+};
+
+async function cargarUsuarios(){
+  if(!usuarioActual || usuarioActual.rol!=="admin") return;
+  const t=document.getElementById("tablaUsuarios");
+  t.innerHTML="<tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr>";
+  const snap=await getDocs(collection(db,"usuarios"));
+  snap.forEach(d=>{
+    t.innerHTML+=`
+      <tr>
+        <td>${d.data().nombre}</td>
+        <td>${d.data().rol}</td>
+        <td><button onclick="eliminarUsuario('${d.id}')">Eliminar</button></td>
+      </tr>`;
+  });
+}
+
+window.eliminarUsuario = async function(id){
+  if(usuarioActual.rol!=="admin") return;
+  await deleteDoc(doc(db,"usuarios",id));
+  cargarUsuarios();
+};
+
+/* ===============================
+   👥 CLIENTES
+================================ */
+window.guardarCliente = async function(){
+  await addDoc(collection(db,"clientes"),{
+    numero:clienteNumero.value,
+    nombre:clienteNombre.value,
+    usuario:usuarioActual.nombre
+  });
+  clienteNumero.value=clienteNombre.value="";
+  cargarClientes();
+};
+
+async function cargarClientes(){
+  const snap=await getDocs(collection(db,"clientes"));
+  tablaClientes.innerHTML="<tr><th>#</th><th>Nombre</th><th>Acción</th></tr>";
+  facturaCliente.innerHTML="";
+  reporteClienteSelect.innerHTML="";
+  snap.forEach(d=>{
+    tablaClientes.innerHTML+=`
+      <tr>
+        <td>${d.data().numero}</td>
+        <td>${d.data().nombre}</td>
+        <td><button onclick="eliminarCliente('${d.id}')">Eliminar</button></td>
+      </tr>`;
+    facturaCliente.innerHTML+=`<option value="${d.id}">${d.data().numero} - ${d.data().nombre}</option>`;
+    reporteClienteSelect.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
+  });
+}
+
+window.eliminarCliente = async function(id){
+  await deleteDoc(doc(db,"clientes",id));
+  cargarClientes();
+};
+<!-- FIREBASE + LOGICA -->
+<script type="module">
+/* ===============================
+   🔥 FIREBASE CONFIG
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD7fjnrJoDGf1LemftyATTiHKCHF_nG2vw",
+  authDomain: "gestor-clientes-f96ad.firebaseapp.com",
+  projectId: "gestor-clientes-f96ad",
+  storageBucket: "gestor-clientes-f96ad.appspot.com",
+  messagingSenderId: "311331329644",
+  appId: "1:311331329644:web:3f73825fd6775842ff2a49"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ===============================
+   🔐 SESION
+================================ */
+let usuarioActual = null;
+
+window.login = async function(){
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+
+  const q = query(collection(db,"usuarios"),
+    where("nombre","==",u),
+    where("password","==",p)
+  );
+  const snap = await getDocs(q);
+
+  if(snap.empty){
+    alert("Usuario o contraseña incorrectos");
+    return;
+  }
+
+  snap.forEach(d=>{
+    usuarioActual = {id:d.id, ...d.data()};
+  });
+
+  sessionStorage.setItem("usuario", JSON.stringify(usuarioActual));
+  iniciarApp();
+};
+
+window.logout = function(){
+  sessionStorage.clear();
+  location.reload();
+};
+
+function iniciarApp(){
+  usuarioActual = JSON.parse(sessionStorage.getItem("usuario"));
+  if(!usuarioActual){
+    document.getElementById("login").style.display="flex";
+    document.getElementById("app").style.display="none";
+    return;
+  }
+
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  if(usuarioActual.rol !== "admin"){
+    document.getElementById("usuariosBtn").style.display="none";
+  }
+
+  cargarClientes();
+  cargarUsuarios();
+}
+
+iniciarApp();
+
+/* ===============================
+   📌 NAVEGACION
+================================ */
+window.show = function(id){
+  document.querySelectorAll(".content > div").forEach(d=>d.style.display="none");
+  document.getElementById(id).style.display="block";
+};
+
+/* ===============================
+   👤 USUARIOS (ADMIN)
+================================ */
+window.guardarUsuario = async function(){
+  if(usuarioActual.rol !== "admin") return;
+
+  await addDoc(collection(db,"usuarios"),{
+    nombre:userNombre.value,
+    password:userPass.value,
+    rol:userRol.value
+  });
+  userNombre.value=userPass.value="";
+  cargarUsuarios();
+};
+
+async function cargarUsuarios(){
+  if(!usuarioActual || usuarioActual.rol!=="admin") return;
+  const t=document.getElementById("tablaUsuarios");
+  t.innerHTML="<tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr>";
+  const snap=await getDocs(collection(db,"usuarios"));
+  snap.forEach(d=>{
+    t.innerHTML+=`
+      <tr>
+        <td>${d.data().nombre}</td>
+        <td>${d.data().rol}</td>
+        <td><button onclick="eliminarUsuario('${d.id}')">Eliminar</button></td>
+      </tr>`;
+  });
+}
+
+window.eliminarUsuario = async function(id){
+  if(usuarioActual.rol!=="admin") return;
+  await deleteDoc(doc(db,"usuarios",id));
+  cargarUsuarios();
+};
+
+/* ===============================
+   👥 CLIENTES
+================================ */
+window.guardarCliente = async function(){
+  await addDoc(collection(db,"clientes"),{
+    numero:clienteNumero.value,
+    nombre:clienteNombre.value,
+    usuario:usuarioActual.nombre
+  });
+  clienteNumero.value=clienteNombre.value="";
+  cargarClientes();
+};
+
+async function cargarClientes(){
+  const snap=await getDocs(collection(db,"clientes"));
+  tablaClientes.innerHTML="<tr><th>#</th><th>Nombre</th><th>Acción</th></tr>";
+  facturaCliente.innerHTML="";
+  reporteClienteSelect.innerHTML="";
+  snap.forEach(d=>{
+    tablaClientes.innerHTML+=`
+      <tr>
+        <td>${d.data().numero}</td>
+        <td>${d.data().nombre}</td>
+        <td><button onclick="eliminarCliente('${d.id}')">Eliminar</button></td>
+      </tr>`;
+    facturaCliente.innerHTML+=`<option value="${d.id}">${d.data().numero} - ${d.data().nombre}</option>`;
+    reporteClienteSelect.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
+  });
+}
+
+window.eliminarCliente = async function(id){
+  await deleteDoc(doc(db,"clientes",id));
+  cargarClientes();
+};
+<!-- FIREBASE + LOGICA -->
+<script type="module">
+/* ===============================
+   🔥 FIREBASE CONFIG
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD7fjnrJoDGf1LemftyATTiHKCHF_nG2vw",
+  authDomain: "gestor-clientes-f96ad.firebaseapp.com",
+  projectId: "gestor-clientes-f96ad",
+  storageBucket: "gestor-clientes-f96ad.appspot.com",
+  messagingSenderId: "311331329644",
+  appId: "1:311331329644:web:3f73825fd6775842ff2a49"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ===============================
+   🔐 SESION
+================================ */
+let usuarioActual = null;
+
+window.login = async function(){
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+
+  const q = query(collection(db,"usuarios"),
+    where("nombre","==",u),
+    where("password","==",p)
+  );
+  const snap = await getDocs(q);
+
+  if(snap.empty){
+    alert("Usuario o contraseña incorrectos");
+    return;
+  }
+
+  snap.forEach(d=>{
+    usuarioActual = {id:d.id, ...d.data()};
+  });
+
+  sessionStorage.setItem("usuario", JSON.stringify(usuarioActual));
+  iniciarApp();
+};
+
+window.logout = function(){
+  sessionStorage.clear();
+  location.reload();
+};
+
+function iniciarApp(){
+  usuarioActual = JSON.parse(sessionStorage.getItem("usuario"));
+  if(!usuarioActual){
+    document.getElementById("login").style.display="flex";
+    document.getElementById("app").style.display="none";
+    return;
+  }
+
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  if(usuarioActual.rol !== "admin"){
+    document.getElementById("usuariosBtn").style.display="none";
+  }
+
+  cargarClientes();
+  cargarUsuarios();
+}
+
+iniciarApp();
+
+/* ===============================
+   📌 NAVEGACION
+================================ */
+window.show = function(id){
+  document.querySelectorAll(".content > div").forEach(d=>d.style.display="none");
+  document.getElementById(id).style.display="block";
+};
+
+/* ===============================
+   👤 USUARIOS (ADMIN)
+================================ */
+window.guardarUsuario = async function(){
+  if(usuarioActual.rol !== "admin") return;
+
+  await addDoc(collection(db,"usuarios"),{
+    nombre:userNombre.value,
+    password:userPass.value,
+    rol:userRol.value
+  });
+  userNombre.value=userPass.value="";
+  cargarUsuarios();
+};
+
+async function cargarUsuarios(){
+  if(!usuarioActual || usuarioActual.rol!=="admin") return;
+  const t=document.getElementById("tablaUsuarios");
+  t.innerHTML="<tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr>";
+  const snap=await getDocs(collection(db,"usuarios"));
+  snap.forEach(d=>{
+    t.innerHTML+=`
+      <tr>
+        <td>${d.data().nombre}</td>
+        <td>${d.data().rol}</td>
+        <td><button onclick="eliminarUsuario('${d.id}')">Eliminar</button></td>
+      </tr>`;
+  });
+}
+
+window.eliminarUsuario = async function(id){
+  if(usuarioActual.rol!=="admin") return;
+  await deleteDoc(doc(db,"usuarios",id));
+  cargarUsuarios();
+};
+
+/* ===============================
+   👥 CLIENTES
+================================ */
+window.guardarCliente = async function(){
+  await addDoc(collection(db,"clientes"),{
+    numero:clienteNumero.value,
+    nombre:clienteNombre.value,
+    usuario:usuarioActual.nombre
+  });
+  clienteNumero.value=clienteNombre.value="";
+  cargarClientes();
+};
+
+async function cargarClientes(){
+  const snap=await getDocs(collection(db,"clientes"));
+  tablaClientes.innerHTML="<tr><th>#</th><th>Nombre</th><th>Acción</th></tr>";
+  facturaCliente.innerHTML="";
+  reporteClienteSelect.innerHTML="";
+  snap.forEach(d=>{
+    tablaClientes.innerHTML+=`
+      <tr>
+        <td>${d.data().numero}</td>
+        <td>${d.data().nombre}</td>
+        <td><button onclick="eliminarCliente('${d.id}')">Eliminar</button></td>
+      </tr>`;
+    facturaCliente.innerHTML+=`<option value="${d.id}">${d.data().numero} - ${d.data().nombre}</option>`;
+    reporteClienteSelect.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
+  });
+}
+
+window.eliminarCliente = async function(id){
+  await deleteDoc(doc(db,"clientes",id));
+  cargarClientes();
+};
+/* ===============================
+   🧾 FACTURAS
+================================ */
+window.guardarFactura = async function(){
+  if(!facturaCliente.value || !facturaNumero.value || !facturaMonto.value){
+    alert("Completa todos los campos");
+    return;
+  }
+
+  await addDoc(collection(db,"facturas"),{
+    clienteId: facturaCliente.value,
+    numero: facturaNumero.value,
+    fecha: facturaFecha.value || new Date().toISOString().slice(0,10),
+    monto: parseFloat(facturaMonto.value),
+    usuario: usuarioActual.nombre,
+    createdAt: new Date()
+  });
+
+  facturaNumero.value="";
+  facturaMonto.value="";
+  cargarFacturas();
+};
+
+async function cargarFacturas(){
+  const snap = await getDocs(collection(db,"facturas"));
+  tablaFacturas.innerHTML = `
+    <tr>
+      <th>Factura</th>
+      <th>Fecha</th>
+      <th>Monto</th>
+      <th>Usuario</th>
+      <th>Acción</th>
+    </tr>`;
+
+  snap.forEach(d=>{
+    const f=d.data();
+    tablaFacturas.innerHTML+=`
+      <tr>
+        <td>${f.numero}</td>
+        <td>${f.fecha}</td>
+        <td>$${f.monto.toFixed(2)}</td>
+        <td>${f.usuario}</td>
+        <td>
+          <button onclick="editarFactura('${d.id}','${f.numero}','${f.fecha}','${f.monto}')">Editar</button>
+          <button onclick="eliminarFactura('${d.id}')">Eliminar</button>
+        </td>
+      </tr>`;
+  });
+}
+
+window.eliminarFactura = async function(id){
+  await deleteDoc(doc(db,"facturas",id));
+  cargarFacturas();
+};
+
+window.editarFactura = function(id,num,fecha,monto){
+  facturaNumero.value=num;
+  facturaFecha.value=fecha;
+  facturaMonto.value=monto;
+
+  guardarFactura = async function(){
+    await updateDoc(doc(db,"facturas",id),{
+      numero: facturaNumero.value,
+      fecha: facturaFecha.value,
+      monto: parseFloat(facturaMonto.value),
+      usuario: usuarioActual.nombre
+    });
+    facturaNumero.value="";
+    facturaMonto.value="";
+    guardarFactura = guardarFacturaOriginal;
+    cargarFacturas();
   };
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const guardarFacturaOriginal = guardarFactura;
 
-  window.login = async function () {
-    const usuario = document.getElementById("usuario").value;
-    const password = document.getElementById("password").value;
+/* ===============================
+   📊 REPORTES – CONSULTA
+================================ */
+window.generarReporte = async function(){
+  const tipo = tipoReporte.value;
+  const cont = document.getElementById("resultadoReporte");
+  cont.innerHTML = "";
 
-    const q = query(
-      collection(db, "usuarios"),
-      where("nombre", "==", usuario),
-      where("password", "==", password)
-    );
+  let facturasSnap = await getDocs(collection(db,"facturas"));
+  let clientesSnap = await getDocs(collection(db,"clientes"));
 
-    const snap = await getDocs(q);
+  let clientes = {};
+  clientesSnap.forEach(c=>{
+    clientes[c.id]=c.data().nombre;
+  });
 
-    if (snap.empty) {
-      alert("❌ Usuario o contraseña incorrectos");
-      return;
+  let total = 0;
+  let filas = "";
+
+  facturasSnap.forEach(f=>{
+    const d=f.data();
+    let valido=true;
+
+    if(tipo==="cliente"){
+      if(d.clienteId !== reporteClienteSelect.value) valido=false;
+
+      if(reporteTipo.value==="dia" && d.fecha!==reporteFecha.value) valido=false;
+      if(reporteTipo.value==="mes" && !d.fecha.startsWith(reporteMes.value)) valido=false;
     }
 
-    const data = snap.docs[0].data();
+    if(valido){
+      total+=d.monto;
+      filas+=`
+        <tr>
+          <td>${d.numero}</td>
+          <td>${d.fecha}</td>
+          <td>${clientes[d.clienteId]||"Global"}</td>
+          <td>$${d.monto.toFixed(2)}</td>
+        </tr>`;
+    }
+  });
 
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("panel").classList.remove("hidden");
-    document.getElementById("bienvenida").innerText =
-      `Usuario: ${data.nombre} | Rol: ${data.rol}`;
-  };
+  cont.innerHTML=`
+    <table>
+      <tr>
+        <th>Factura</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Monto</th>
+      </tr>
+      ${filas}
+      <tr>
+        <td colspan="3"><b>Total</b></td>
+        <td style="color:green"><b>$${total.toFixed(2)}</b></td>
+      </tr>
+    </table>
+    <br>
+    <button class="action" onclick="exportarPDF()">Generar PDF</button>
+  `;
+};
+/* ===============================
+   🧾 PDF PROFESIONAL
+================================ */
+window.exportarPDF = async function(){
+  const cont = document.getElementById("resultadoReporte");
+  if(!cont.innerHTML.trim()){
+    alert("No hay reporte para exportar");
+    return;
+  }
+
+  const ventana = window.open("", "_blank");
+  const fecha = new Date();
+  const fechaTxt = fecha.toLocaleDateString("es-MX");
+  const horaTxt = fecha.toLocaleTimeString("es-MX");
+
+  ventana.document.write(`
+    <html>
+    <head>
+      <title>Reporte</title>
+      <style>
+        body{
+          font-family: Arial, sans-serif;
+          padding:20px;
+          color:#000;
+        }
+        h1{
+          color:#0d47a1;
+          margin-bottom:5px;
+        }
+        .meta{
+          font-size:12px;
+          margin-bottom:15px;
+        }
+        table{
+          width:100%;
+          border-collapse:collapse;
+        }
+        th{
+          background:#0d47a1;
+          color:#fff;
+          padding:8px;
+        }
+        td{
+          padding:8px;
+          border-bottom:1px solid #ccc;
+        }
+        .total{
+          color:#2e7d32;
+          font-weight:bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Reporte</h1>
+      <div class="meta">
+        Generado por: <b>${usuarioActual.nombre}</b><br>
+        Fecha: ${fechaTxt} ${horaTxt}<br>
+        Tipo: ${tipoReporte.value === "global" ? "Global" : "Por cliente"}
+      </div>
+
+      ${cont.innerHTML}
+
+      <script>
+        window.onload = function(){
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+  `);
+
+  ventana.document.close();
+
+  /* 📱 COMPARTIR EN MÓVIL */
+  if(navigator.share){
+    setTimeout(async ()=>{
+      try{
+        await navigator.share({
+          title:"Reporte",
+          text:"Reporte generado desde Gestor de Clientes"
+        });
+      }catch(e){}
+    },2000);
+  }
+};
+
+/* ===============================
+   🔁 EVENTOS DE REPORTES
+================================ */
+tipoReporte.addEventListener("change",()=>{
+  reporteCliente.style.display = tipoReporte.value==="cliente" ? "block" : "none";
+});
+
+reporteTipo.addEventListener("change",()=>{
+  reporteFecha.style.display = reporteTipo.value==="dia" ? "block" : "none";
+  reporteMes.style.display = reporteTipo.value==="mes" ? "block" : "none";
+});
+
+/* ===============================
+   🔚 FIN SCRIPT
+================================ */
 </script>
 
 </body>
