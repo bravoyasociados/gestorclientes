@@ -232,6 +232,34 @@
     login.style.display = "none";
     menu.style.display = "flex";
     mostrar("clientes");
+// 🔐 CREAR USUARIOS INICIALES (EJECUTAR SOLO UNA VEZ)
+async function crearUsuariosIniciales() {
+  const snap = await getDocs(collection(db, "usuarios"));
+  if (!snap.empty) return; // ya existen
+
+  await addDoc(collection(db, "usuarios"), {
+    nombre: "Fabian",
+    password: "adminFabian",
+    rol: "admin"
+  });
+
+  await addDoc(collection(db, "usuarios"), {
+    nombre: "Gerardo",
+    password: "Mati2026",
+    rol: "usuario"
+  });
+
+  await addDoc(collection(db, "usuarios"), {
+    nombre: "Angelica",
+    password: "Mati2026",
+    rol: "usuario"
+  });
+
+  console.log("✅ Usuarios iniciales creados");
+}
+
+crearUsuariosIniciales();
+
   };
     /* ===================== FACTURAS ===================== */
     window.guardarFactura = async function () {
