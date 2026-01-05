@@ -6,10 +6,7 @@
   import {
     getFirestore,
     collection,
-    addDoc,
-    getDocs,
-    query,
-    where
+    addDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -21,24 +18,25 @@
     appId: "1:311331329644:web:3f73825fd6775842ff2a49"
   };
 
-  // 🔥 INICIALIZACIÓN ÚNICA
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // 🔥 PRUEBA REAL
-  async function pruebaFirestore() {
-    await addDoc(collection(db, "clientes"), {
-      nombre: "Cliente prueba",
-      numeroCliente: "999",
-      fecha: new Date()
-    });
-    console.log("🔥 Guardado correctamente en Firestore");
+  // 🔥 GUARDA AUTOMÁTICAMENTE AL ABRIR
+  async function guardarPrueba() {
+    try {
+      await addDoc(collection(db, "clientes"), {
+        nombre: "Cliente desde GitHub",
+        numeroCliente: "001",
+        fecha: new Date()
+      });
+      console.log("🔥 Documento guardado en Firestore");
+    } catch (e) {
+      console.error("❌ Error Firestore:", e);
+    }
   }
 
-  pruebaFirestore();
+  guardarPrueba();
 </script>
-
-
 <meta charset="UTF-8">
 <title>Sistema de Facturación</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
