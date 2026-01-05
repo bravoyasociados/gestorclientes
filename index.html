@@ -281,7 +281,14 @@ window.login = async function(){
   });
 
   sessionStorage.setItem("usuario", JSON.stringify(usuarioActual));
+  document.addEventListener("DOMContentLoaded", ()=>{
+  const u = sessionStorage.getItem("usuario");
+  if(u){
+    usuarioActual = JSON.parse(u);
+  }
   iniciarApp();
+});
+
 };
 
 window.logout = function(){
@@ -317,6 +324,7 @@ window.show = function(id){
   document.querySelectorAll(".content > div").forEach(d=>d.style.display="none");
   document.getElementById(id).style.display="block";
 };
+
 
 /* ===============================
    👤 USUARIOS (ADMIN)
